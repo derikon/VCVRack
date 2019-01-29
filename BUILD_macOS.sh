@@ -69,12 +69,63 @@ make -j8
 
 
 
-
 cd $BASE_DIR
 
 cd ./Rack_v1
 echo "build Rack v1 dependencies"
 make dep -j8
 echo "build Rack v1"
+make -j8
+
+echo "build Rack v1 plugins"
+cd ./plugins
+
+#echo "clone AudibleInstruments v1"
+#git clone https://github.com/VCVRack/AudibleInstruments.git
+#cd ./AudibleInstruments
+#git checkout v1
+#git submodule update --init --recursive
+#echo "build AudibleInstruments v0.6"
+#make -j8
+#make dist
+#
+##cd ../
+
+echo "clone Fundamental v1"
+git clone https://github.com/VCVRack/Fundamental.git
+cd ./Fundamental
+git checkout v1
+echo "build Fundamental v1"
+make dep -j8
+make -j8
+make dist
+
+cd ../
+
+echo "clone Befaco v1"
+git clone https://github.com/VCVRack/Befaco.git
+cd ./Befaco
+git checkout v1
+echo "build Befaco v1"
+make -j8
+make dist
+
+cd ../
+
+#echo "clone ESeries v1"
+#git clone https://github.com/VCVRack/ESeries.git
+#cd ./ESeries
+#git checkout v0.6
+#echo "build ESeries v1"
+#make -j8
+#make dist
+#
+#cd ../
+
+echo "clone Template v1"
+git clone https://github.com/VCVRack/Template.git
+cd ./Template
+git checkout v1
+echo "build Template v1"
 make -j8
 
