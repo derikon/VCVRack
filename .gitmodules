@@ -1,8 +1,0 @@
-[submodule "Rack_v1"]
-	path = Rack_v1
-	url = https://github.com/VCVRack/Rack.git
-	branch = v1
-[submodule "Rack_v0.6"]
-	path = Rack_v0.6
-	url = https://github.com/VCVRack/Rack.git
-	branch = v0.6
