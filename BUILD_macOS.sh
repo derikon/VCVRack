@@ -10,6 +10,9 @@ C_H3="\033[1;45;97m"
 
 BASE_DIR=$(pwd)
 
+LOG="${BASE_DIR}/build.log"
+touch $LOG &> /dev/null
+
 echo -e "${C_H1} VCV RACK INSTALLATION ${C_CLEAR}"
 
 
@@ -33,9 +36,9 @@ echo -e "${C_H1} INSTALL VCV RACK ${VERSION} ${C_CLEAR}"
 if [ ! -d "Rack_${VERSION}" ]; then
     echo -e "${C_GREEN}clone Rack ${VERSION}${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone https://github.com/VCVRack/Rack.git "Rack_${VERSION}" &> /dev/null
+    git clone https://github.com/VCVRack/Rack.git "Rack_${VERSION}" &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -43,9 +46,9 @@ if [ ! -d "Rack_${VERSION}" ]; then
     echo -e "${C_GREEN}update submodules${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
     cd ./Rack_$VERSION
-    git submodule update --init -- &> /dev/null
+    git submodule update --init --recursive &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -59,12 +62,12 @@ cd ./Rack_$VERSION
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [[ "$BRANCH" != "$VERSION" ]]; then
     git checkout $VERSION &> /dev/null
-    git pull &> /dev/null
+    git pull  &> /dev/null
     echo -e "${C_GREEN}update submodules${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git submodule update --init --recursive &> /dev/null
+    git submodule update --init --recursive &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -76,9 +79,9 @@ fi
 git fetch &> /dev/null
 if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
     git pull &> /dev/null
-    git submodule update --init --recursive &> /dev/null
+    git submodule update --init --recursive &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -95,9 +98,9 @@ fi
 
 echo -e "${C_H2} build Rack ${VERSION} dependencies ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make dep -j4 &> /dev/null
+make dep -j4 &> $LOG
 if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed${C_CLEAR}"
+    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
 else
     echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -105,9 +108,9 @@ fi
 
 echo -e "${C_H2} build Rack ${VERSION} ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> /dev/null
+make -j4 &> $LOG
 if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed${C_CLEAR}"
+    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
 else
     echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -118,9 +121,9 @@ if [ -d "docs" ]; then
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
     cd ./docs
     make clean &> /dev/null
-    make doxygen &> /dev/null
+    make doxygen &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -145,9 +148,9 @@ echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
 if [ ! -d "${PLUGIN}" ]; then
     echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> /dev/null
+    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -179,9 +182,9 @@ fi
 
 echo -e "${C_H3} build ${PLUGIN} ${VERSION} dependencies ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make dep -j4 &> /dev/null
+make dep -j4 &> $LOG
 if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed${C_CLEAR}"
+    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
 else
     echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -189,14 +192,14 @@ fi
 
 echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> /dev/null
+make -j4 &> $LOG
 if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed${C_CLEAR}"
+    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
 else
     echo -e "${C_GREEN}finished${C_CLEAR}"
 fi
-make dist &> /dev/null
+make dist &> $LOG
 cd ../
 
 
@@ -209,18 +212,18 @@ cd ../
 #if [ ! -d "${PLUGIN}" ]; then
 #    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
 #    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> /dev/null
+#    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
 #    if [[ $? != 0 ]]; then
-#        echo -e "${C_RED}failed${C_CLEAR}"
+#        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #        exit -1
 #    else
 #        echo -e "${C_GREEN}finished${C_CLEAR}"
 #    fi
 #    echo -e "${C_GREEN}update submodules${C_CLEAR}"
 #    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#    git submodule update --init --recursive &> /dev/null
+#    git submodule update --init --recursive &> $LOG
 #    if [[ $? != 0 ]]; then
-#        echo -e "${C_RED}failed${C_CLEAR}"
+#        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #        exit -1
 #    else
 #        echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -236,9 +239,9 @@ cd ../
 #    git pull &> /dev/null
 #    echo -e "${C_GREEN}update submodules${C_CLEAR}"
 #    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#    git submodule update --init --recursive &> /dev/null
+#    git submodule update --init --recursive &> $LOG
 #    if [[ $? != 0 ]]; then
-#        echo -e "${C_RED}failed${C_CLEAR}"
+#        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #        exit -1
 #    else
 #        echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -252,9 +255,9 @@ cd ../
 #    git pull &> /dev/null
 #    echo -e "${C_GREEN}update submodules${C_CLEAR}"
 #    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#    git submodule update --init --recursive &> /dev/null
+#    git submodule update --init --recursive &> $LOG
 #    if [[ $? != 0 ]]; then
-#        echo -e "${C_RED}failed${C_CLEAR}"
+#        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #        exit -1
 #    else
 #        echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -270,14 +273,14 @@ cd ../
 #
 #echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
 #echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#make -j4 &> /dev/null
+#make -j4 &> $LOG
 #if [[ $? != 0 ]]; then
-#    echo -e "${C_RED}failed${C_CLEAR}"
+#    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #    exit -1
 #else
 #    echo -e "${C_GREEN}finished${C_CLEAR}"
 #fi
-#make dist &> /dev/null
+#make dist &> $LOG
 #cd ../
 
 
@@ -289,9 +292,9 @@ cd ../
 #if [ ! -d "${PLUGIN}" ]; then
 #    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
 #    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> /dev/null
+#    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
 #    if [[ $? != 0 ]]; then
-#        echo -e "${C_RED}failed${C_CLEAR}"
+#        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #        exit -1
 #    else
 #        echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -323,14 +326,14 @@ cd ../
 #
 #echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
 #echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-#make -j4 &> /dev/null
+#make -j4 &> $LOG
 #if [[ $? != 0 ]]; then
-#    echo -e "${C_RED}failed${C_CLEAR}"
+#    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
 #    exit -1
 #else
 #    echo -e "${C_GREEN}finished${C_CLEAR}"
 #fi
-#make dist &> /dev/null
+#make dist &> $LOG
 #cd ../
 
 
@@ -342,9 +345,9 @@ echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
 if [ ! -d "${PLUGIN}" ]; then
     echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> /dev/null
+    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -376,14 +379,14 @@ fi
 
 echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> /dev/null
+make -j4 &> $LOG
 if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed${C_CLEAR}"
+    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
 else
     echo -e "${C_GREEN}finished${C_CLEAR}"
 fi
-make dist &> /dev/null
+make dist &> $LOG
 cd ../
 
 
@@ -395,9 +398,9 @@ echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
 if [ ! -d "${PLUGIN}" ]; then
     echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> /dev/null
+    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
     if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed${C_CLEAR}"
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
@@ -429,9 +432,9 @@ fi
 
 echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> /dev/null
+make -j4 &> $LOG
 if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed${C_CLEAR}"
+    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
 else
     echo -e "${C_GREEN}finished${C_CLEAR}"
