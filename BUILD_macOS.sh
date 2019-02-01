@@ -19,16 +19,16 @@ echo -e "${C_H1} VCV RACK INSTALLATION ${C_CLEAR}"
 echo -e "supported versions: ${C_GREEN}v0.6${C_CLEAR} and ${C_GREEN}v1${C_CLEAR}"
 read -p 'install version: ' VERSION
 if [[ "$VERSION" != "v0.6" ]] && [[ "$VERSION" != "v1" ]]; then
-	echo -e "${C_RED}\"${VERSION}\" is not supported.${C_CLEAR}"
-	echo -e "choose ${C_GREEN}v0.6${C_CLEAR} or ${C_GREEN}v1${C_CLEAR}"
-	exit -1
+    echo -e "${C_RED}\"${VERSION}\" is not supported.${C_CLEAR}"
+    echo -e "choose ${C_GREEN}v0.6${C_CLEAR} or ${C_GREEN}v1${C_CLEAR}"
+    exit -1
 fi
 
 echo "install plugins"
 read -p "y (yes) or n (no): " INSTALL_PLUGINS
 if [[ "$INSTALL_PLUGINS" != "y" ]] && [[ "$INSTALL_PLUGINS" != "n" ]]; then
-	echo -e "${C_RED}\"${VERSION}\" is not supported.${C_CLEAR}"
-	INSTALL_PLUGINS=n
+    echo -e "${C_RED}\"${VERSION}\" is not supported.${C_CLEAR}"
+    INSTALL_PLUGINS=n
 fi
 
 
@@ -135,310 +135,108 @@ fi
 
 
 if [[ "$INSTALL_PLUGINS" != "y" ]]; then
-	exit 0
+    exit 0
 fi
 echo -e "${C_H1} INSTALL VCV RACK ${VERSION} PLUGINS ${C_CLEAR}"
-cd ./plugins
 
 
+install_plugin () {
+    PLUGIN=$1
+    cd ./plugins
+        echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
+    if [ ! -d "${PLUGIN}" ]; then
+        echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
+        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
+        if [[ $? != 0 ]]; then
+            echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+            exit -1
+        else
+            echo -e "${C_GREEN}finished${C_CLEAR}"
+        fi
+        echo -e "${C_GREEN}update submodules${C_CLEAR}"
+        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        cd ./$PLUGIN
+        git submodule update --init --recursive &> $LOG
+        if [[ $? != 0 ]]; then
+            echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+            exit -1
+        else
+            echo -e "${C_GREEN}finished${C_CLEAR}"
+        fi
+        cd ../
+    else
+        echo -e "${C_GREEN}already cloned ${PLUGIN}${C_CLEAR}"
+    fi
 
+    cd ./$PLUGIN
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$BRANCH" != "$VERSION" ]]; then
+        git checkout $VERSION &> /dev/null
+        git pull &> /dev/null
+        echo -e "${C_GREEN}update submodules${C_CLEAR}"
+        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        git submodule update --init --recursive &> $LOG
+        if [[ $? != 0 ]]; then
+            echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+            exit -1
+        else
+            echo -e "${C_GREEN}finished${C_CLEAR}"
+        fi
+    else
+        echo -e "${C_GREEN}${PLUGIN} is already on branch ${VERSION}${C_CLEAR}"
+    fi
 
-PLUGIN=Fundamental
-echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
-if [ ! -d "${PLUGIN}" ]; then
-    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
+    git fetch &> /dev/null
+    if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
+        git pull &> /dev/null
+        echo -e "${C_GREEN}update submodules${C_CLEAR}"
+        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        git submodule update --init --recursive &> $LOG
+        if [[ $? != 0 ]]; then
+            echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+            exit -1
+        else
+            echo -e "${C_GREEN}finished${C_CLEAR}"
+        fi
+    else
+        echo -e "${C_GREEN}branch ${VERSION} is up to date${C_CLEAR}"
+    fi
+
+    if [ -d "build" ]; then
+        echo -e "${C_RED}clean old build${C_CLEAR}"
+        make clean &> /dev/null
+    fi
+
+    echo -e "${C_H3} build ${PLUGIN} ${VERSION} dependencies ${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
+    make dep -j4 &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
     else
         echo -e "${C_GREEN}finished${C_CLEAR}"
     fi
-else
-    echo -e "${C_GREEN}already cloned ${PLUGIN}${C_CLEAR}"
-fi
 
-cd ./$PLUGIN
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "$VERSION" ]]; then
-    git checkout $VERSION &> /dev/null
-    git pull &> /dev/null
-else
-    echo -e "${C_GREEN}${PLUGIN} is already on branch ${VERSION}${C_CLEAR}"
-fi
-
-git fetch &> /dev/null
-if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
-    git pull &> /dev/null
-else
-    echo -e "${C_GREEN}branch ${VERSION} is up to date${C_CLEAR}"
-fi
-
-if [ -d "build" ]; then
-    echo -e "${C_RED}clean old build${C_CLEAR}"
-    make clean &> /dev/null
-fi
-
-echo -e "${C_H3} build ${PLUGIN} ${VERSION} dependencies ${C_CLEAR}"
-echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make dep -j4 &> $LOG
-if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-    exit -1
-else
-    echo -e "${C_GREEN}finished${C_CLEAR}"
-fi
-
-echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
-echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> $LOG
-if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-    exit -1
-else
-    echo -e "${C_GREEN}finished${C_CLEAR}"
-fi
-make dist &> $LOG
-cd ../
+    echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
+    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    make -j4 &> $LOG
+    if [[ $? != 0 ]]; then
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+        exit -1
+    else
+        echo -e "${C_GREEN}finished${C_CLEAR}"
+    fi
+    make dist &> $LOG
+    cd ../../
+}
 
 
-
-
+install_plugin Fundamental
+install_plugin Befaco
+install_plugin Template
 
 if [[ "$VERSION" == "v0.6" ]]; then
-	PLUGIN=AudibleInstruments
-	echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
-	if [ ! -d "${PLUGIN}" ]; then
-	    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
-	    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
-	    if [[ $? != 0 ]]; then
-	        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	        exit -1
-	    else
-	        echo -e "${C_GREEN}finished${C_CLEAR}"
-	    fi
-	    echo -e "${C_GREEN}update submodules${C_CLEAR}"
-	    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	    cd ./$PLUGIN
-	    git submodule update --init --recursive &> $LOG
-	    if [[ $? != 0 ]]; then
-	        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	        exit -1
-	    else
-	        echo -e "${C_GREEN}finished${C_CLEAR}"
-	    fi
-	    cd ../
-	else
-	    echo -e "${C_GREEN}already cloned ${PLUGIN}${C_CLEAR}"
-	fi
-
-	cd ./$PLUGIN
-	BRANCH=$(git rev-parse --abbrev-ref HEAD)
-	if [[ "$BRANCH" != "$VERSION" ]]; then
-	    git checkout $VERSION &> /dev/null
-	    git pull &> /dev/null
-	    echo -e "${C_GREEN}update submodules${C_CLEAR}"
-	    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	    git submodule update --init --recursive &> $LOG
-	    if [[ $? != 0 ]]; then
-	        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	        exit -1
-	    else
-	        echo -e "${C_GREEN}finished${C_CLEAR}"
-	    fi
-	else
-	    echo -e "${C_GREEN}${PLUGIN} is already on branch ${VERSION}${C_CLEAR}"
-	fi
-
-	git fetch &> /dev/null
-	if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
-	    git pull &> /dev/null
-	    echo -e "${C_GREEN}update submodules${C_CLEAR}"
-	    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	    git submodule update --init --recursive &> $LOG
-	    if [[ $? != 0 ]]; then
-	        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	        exit -1
-	    else
-	        echo -e "${C_GREEN}finished${C_CLEAR}"
-	    fi
-	else
-	    echo -e "${C_GREEN}branch ${VERSION} is up to date${C_CLEAR}"
-	fi
-
-	if [ -d "build" ]; then
-	    echo -e "${C_RED}clean old build${C_CLEAR}"
-	    make clean &> /dev/null
-	fi
-
-	echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
-	echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	make -j4 &> $LOG
-	if [[ $? != 0 ]]; then
-	    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	    exit -1
-	else
-	    echo -e "${C_GREEN}finished${C_CLEAR}"
-	fi
-	make dist &> $LOG
-cd ../
+    install_plugin AudibleInstruments
+    install_plugin ESeries
 fi
-
-
-
-if [[ "$VERSION" == "v0.6" ]]; then
-	PLUGIN=ESeries
-	echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
-	if [ ! -d "${PLUGIN}" ]; then
-	    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
-	    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
-	    if [[ $? != 0 ]]; then
-	        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	        exit -1
-	    else
-	        echo -e "${C_GREEN}finished${C_CLEAR}"
-	    fi
-	else
-	    echo -e "${C_GREEN}already cloned ${PLUGIN}${C_CLEAR}"
-	fi
-
-	cd ./$PLUGIN
-	BRANCH=$(git rev-parse --abbrev-ref HEAD)
-	if [[ "$BRANCH" != "$VERSION" ]]; then
-	    git checkout $VERSION &> /dev/null
-	    git pull &> /dev/null
-	else
-	    echo -e "${C_GREEN}${PLUGIN} is already on branch ${VERSION}${C_CLEAR}"
-	fi
-
-	git fetch &> /dev/null
-	if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
-	    git pull &> /dev/null
-	else
-	    echo -e "${C_GREEN}branch ${VERSION} is up to date${C_CLEAR}"
-	fi
-
-	if [ -d "build" ]; then
-	    echo -e "${C_RED}clean old build${C_CLEAR}"
-	    make clean &> /dev/null
-	fi
-
-	echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
-	echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-	make -j4 &> $LOG
-	if [[ $? != 0 ]]; then
-	    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-	    exit -1
-	else
-	    echo -e "${C_GREEN}finished${C_CLEAR}"
-	fi
-	make dist &> $LOG
-	cd ../
-fi
-
-
-
-
-PLUGIN=Befaco
-echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
-if [ ! -d "${PLUGIN}" ]; then
-    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
-    if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-        exit -1
-    else
-        echo -e "${C_GREEN}finished${C_CLEAR}"
-    fi
-else
-    echo -e "${C_GREEN}already cloned ${PLUGIN}${C_CLEAR}"
-fi
-
-cd ./$PLUGIN
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "$VERSION" ]]; then
-    git checkout $VERSION &> /dev/null
-    git pull &> /dev/null
-else
-    echo -e "${C_GREEN}${PLUGIN} is already on branch ${VERSION}${C_CLEAR}"
-fi
-
-git fetch &> /dev/null
-if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
-    git pull &> /dev/null
-else
-    echo -e "${C_GREEN}branch ${VERSION} is up to date${C_CLEAR}"
-fi
-
-if [ -d "build" ]; then
-    echo -e "${C_RED}clean old build${C_CLEAR}"
-    make clean &> /dev/null
-fi
-
-echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
-echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> $LOG
-if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-    exit -1
-else
-    echo -e "${C_GREEN}finished${C_CLEAR}"
-fi
-make dist &> $LOG
-cd ../
-
-
-
-
-
-PLUGIN=Template
-echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
-if [ ! -d "${PLUGIN}" ]; then
-    echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
-    if [[ $? != 0 ]]; then
-        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-        exit -1
-    else
-        echo -e "${C_GREEN}finished${C_CLEAR}"
-    fi
-else
-    echo -e "${C_GREEN}already cloned ${PLUGIN}${C_CLEAR}"
-fi
-
-cd ./$PLUGIN
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "$VERSION" ]]; then
-    git checkout $VERSION &> /dev/null
-    git pull &> /dev/null
-else
-    echo -e "${C_GREEN}${PLUGIN} is already on branch ${VERSION}${C_CLEAR}"
-fi
-
-git fetch &> /dev/null
-if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
-    git pull &> /dev/null
-else
-    echo -e "${C_GREEN}branch ${VERSION} is up to date${C_CLEAR}"
-fi
-
-if [ -d "build" ]; then
-    echo -e "${C_RED}clean old build${C_CLEAR}"
-    make clean &> /dev/null
-fi
-
-echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
-echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> $LOG
-if [[ $? != 0 ]]; then
-    echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
-    exit -1
-else
-    echo -e "${C_GREEN}finished${C_CLEAR}"
-fi
-cd ../
