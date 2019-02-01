@@ -2,8 +2,7 @@
 
 [VCV Rack](https://vcvrack.com/) is an open-source and cross-platform virtual modular synthesizer.
 
-This repository is use to build VCV Rack in several versions for research and development purposes in parallel using CMake.
-If you just want to build and run VCV Rack clone the official repository from [https://github.com/VCVRack/Rack.git]() and follow the build instructions from the [manual](https://vcvrack.com/manual/Building.html).
+This repository is use to build VCV Rack in several versions for research and development purposes.
 
 
 ## Build
@@ -12,8 +11,22 @@ If you just want to build and run VCV Rack clone the official repository from [h
 2. `cd VCVRack`
 3. `./BUILD_macOS.sh`
 
+The build script checks for build dependencies: `brew`, `git`, `wget`, `cmake`, `autoconf`, `automake`, `libtool`
 
-### Configure Clion for development
+You can decide which Rack version to build and if the standard plugins should be build as well.
+
++ [Fundamental](https://github.com/VCVRack/Fundamental): v0.6 and v1
++ [Befaco](https://github.com/VCVRack/Befaco): v0.6 and v1
++ [Template](https://github.com/VCVRack/Template): v0.6 and v1 (only used for development purpose)
++ [ESeries](https://github.com/VCVRack/ESeries): v0.6
++ [AudibleIntruments](https://github.com/VCVRack/Befaco): v0.6
+
+
+## Development
+
+Rack by default uses `make` to build executables. I also want to use `cmake` and added a `CMakeLists.txt`.
+
+### Configure Clion
 
 1. Open CMakeLists.txt in [Clion](https://www.jetbrains.com/clion/)
 2. Go to Run -> Edit Configurations in menu bar. You should see a build configuration for each VCV Rack version.
