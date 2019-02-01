@@ -14,9 +14,51 @@ CPUS=$(sysctl -n hw.ncpu)
 LOG="${BASE_DIR}/build.log"
 touch $LOG &> /dev/null
 
-echo -e "${C_H1} VCV RACK INSTALLATION ${C_CLEAR}"
+
+echo -e "${C_H1} VCV RACK INSTALLATION SCRIPT ${C_CLEAR}"
 
 
+
+
+
+echo -e "${C_H2} CHECK GLOBAL DEPENDENCIES ${C_CLEAR}"
+
+check_dependency () {
+    local TOOL=$1
+    echo -e "${C_H3} ${TOOL} ${C_CLEAR}"
+    which ${TOOL} &> /dev/null
+    if [[ $? != 0 ]]; then
+        echo -e "${C_RED}not installed${C_CLEAR}"
+        echo -e "${C_YELLOW}install git - this might take a while ...${C_CLEAR}"
+        $(brew install ${TOOL}) &> /dev/null
+    else
+        echo -e "${C_GREEN}ok${C_CLEAR}"
+    fi
+}
+
+echo -e "${C_H3} Brew Package Manager ${C_CLEAR}"
+which brew &> /dev/null
+if [[ $? != 0 ]]; then
+    echo -e "${C_RED}not installed${C_CLEAR}"
+    echo -e "${C_YELLOW}install brew - this might take a while ...${C_CLEAR}"
+    $(/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)") &> /dev/null
+else
+    echo -e "${C_GREEN}ok${C_CLEAR}"
+fi
+
+check_dependency git
+check_dependency wget
+check_dependency cmake
+check_dependency autoconf
+check_dependency automake
+check_dependency libtool
+
+
+
+
+
+
+echo -e "${C_H2} SELECT VCV RACK VERSION ${C_CLEAR}"
 echo -e "supported versions: ${C_GREEN}v0.6${C_CLEAR} and ${C_GREEN}v1${C_CLEAR}"
 read -p 'install version: ' VERSION
 if [[ "$VERSION" != "v0.6" ]] && [[ "$VERSION" != "v1" ]]; then
@@ -33,10 +75,14 @@ if [[ "$INSTALL_PLUGINS" != "y" ]] && [[ "$INSTALL_PLUGINS" != "n" ]]; then
 fi
 
 
+
+
+
+
 echo -e "${C_H1} INSTALL VCV RACK ${VERSION} ${C_CLEAR}"
 if [ ! -d "Rack_${VERSION}" ]; then
     echo -e "${C_GREEN}clone Rack ${VERSION}${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
     git clone https://github.com/VCVRack/Rack.git "Rack_${VERSION}" &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -45,7 +91,7 @@ if [ ! -d "Rack_${VERSION}" ]; then
         echo -e "${C_GREEN}finished${C_CLEAR}"
     fi
     echo -e "${C_GREEN}update submodules${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
     cd ./Rack_$VERSION
     git submodule update --init --recursive &> $LOG
     if [[ $? != 0 ]]; then
@@ -65,7 +111,7 @@ if [[ "$BRANCH" != "$VERSION" ]]; then
     git checkout $VERSION &> /dev/null
     git pull  &> /dev/null
     echo -e "${C_GREEN}update submodules${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
     git submodule update --init --recursive &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -98,7 +144,7 @@ if [ -d "build" ]; then
 fi
 
 echo -e "${C_H2} build Rack ${VERSION} dependencies ${C_CLEAR}"
-echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
 make dep -j${CPUS} &> $LOG
 if [[ $? != 0 ]]; then
     echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -108,7 +154,7 @@ else
 fi
 
 echo -e "${C_H2} build Rack ${VERSION} ${C_CLEAR}"
-echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
 make -j${CPUS} &> $LOG
 if [[ $? != 0 ]]; then
     echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -119,7 +165,7 @@ fi
 
 if [ -d "docs" ]; then
     echo -e "${C_H2} build Rack ${VERSION} documentation ${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
     cd ./docs
     make clean &> /dev/null
     make doxygen &> $LOG
@@ -142,12 +188,12 @@ echo -e "${C_H1} INSTALL VCV RACK ${VERSION} PLUGINS ${C_CLEAR}"
 
 
 install_plugin () {
-    PLUGIN=$1
+    local PLUGIN=$1
     cd ./plugins
         echo -e "${C_H2} ${PLUGIN} ${C_CLEAR}"
     if [ ! -d "${PLUGIN}" ]; then
         echo -e "${C_GREEN}clone ${PLUGIN} ${VERSION}${C_CLEAR}"
-        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
         git clone "https://github.com/VCVRack/${PLUGIN}.git" &> $LOG
         if [[ $? != 0 ]]; then
             echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -156,7 +202,7 @@ install_plugin () {
             echo -e "${C_GREEN}finished${C_CLEAR}"
         fi
         echo -e "${C_GREEN}update submodules${C_CLEAR}"
-        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
         cd ./$PLUGIN
         git submodule update --init --recursive &> $LOG
         if [[ $? != 0 ]]; then
@@ -176,7 +222,7 @@ install_plugin () {
         git checkout $VERSION &> /dev/null
         git pull &> /dev/null
         echo -e "${C_GREEN}update submodules${C_CLEAR}"
-        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
         git submodule update --init --recursive &> $LOG
         if [[ $? != 0 ]]; then
             echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -192,7 +238,7 @@ install_plugin () {
     if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
         git pull &> /dev/null
         echo -e "${C_GREEN}update submodules${C_CLEAR}"
-        echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+        echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
         git submodule update --init --recursive &> $LOG
         if [[ $? != 0 ]]; then
             echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -210,7 +256,7 @@ install_plugin () {
     fi
 
     echo -e "${C_H3} build ${PLUGIN} ${VERSION} dependencies ${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
     make dep -j${CPUS} &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
@@ -220,7 +266,7 @@ install_plugin () {
     fi
 
     echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
-    echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
     make -j${CPUS} &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
