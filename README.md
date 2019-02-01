@@ -19,7 +19,7 @@ You can decide which Rack version to build and if the standard plugins should be
 + [Befaco](https://github.com/VCVRack/Befaco): v0.6 and v1
 + [Template](https://github.com/VCVRack/Template): v0.6 and v1 (only used for development purpose)
 + [ESeries](https://github.com/VCVRack/ESeries): v0.6
-+ [AudibleIntruments](https://github.com/VCVRack/Befaco): v0.6
++ [AudibleInstruments](https://github.com/VCVRack/AudibleInstruments): v0.6
 
 
 ## Development
