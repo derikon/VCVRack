@@ -9,6 +9,7 @@ C_H2="\033[1;105;97m"
 C_H3="\033[1;45;97m"
 
 BASE_DIR=$(pwd)
+CPUS=$(sysctl -n hw.ncpu)
 
 LOG="${BASE_DIR}/build.log"
 touch $LOG &> /dev/null
@@ -98,7 +99,7 @@ fi
 
 echo -e "${C_H2} build Rack ${VERSION} dependencies ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make dep -j4 &> $LOG
+make dep -j${CPUS} &> $LOG
 if [[ $? != 0 ]]; then
     echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
@@ -108,7 +109,7 @@ fi
 
 echo -e "${C_H2} build Rack ${VERSION} ${C_CLEAR}"
 echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-make -j4 &> $LOG
+make -j${CPUS} &> $LOG
 if [[ $? != 0 ]]; then
     echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
     exit -1
@@ -210,7 +211,7 @@ install_plugin () {
 
     echo -e "${C_H3} build ${PLUGIN} ${VERSION} dependencies ${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    make dep -j4 &> $LOG
+    make dep -j${CPUS} &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
@@ -220,7 +221,7 @@ install_plugin () {
 
     echo -e "${C_H3} build ${PLUGIN} ${VERSION} ${C_CLEAR}"
     echo -e "${C_YELLOW}this will take some time ...${C_CLEAR}"
-    make -j4 &> $LOG
+    make -j${CPUS} &> $LOG
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
         exit -1
