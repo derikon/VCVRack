@@ -70,7 +70,14 @@ fi
 echo "install plugins"
 read -p "y (yes) or n (no): " INSTALL_PLUGINS
 if [[ "$INSTALL_PLUGINS" != "y" ]] && [[ "$INSTALL_PLUGINS" != "n" ]]; then
-    echo -e "${C_RED}\"${VERSION}\" is not supported.${C_CLEAR}"
+    echo -e "${C_RED}Won't install any plugins.${C_CLEAR}"
+    INSTALL_PLUGINS=n
+fi
+
+echo "install Bridge"
+read -p "y (yes) or n (no): " INSTALL_BRIDGE
+if [[ "$INSTALL_BRIDGE" != "y" ]] && [[ "$INSTALL_BRIDGE" != "n" ]]; then
+    echo -e "${C_RED}Won't install Bridge.${C_CLEAR}"
     INSTALL_PLUGINS=n
 fi
 
@@ -176,6 +183,64 @@ if [ -d "docs" ]; then
         echo -e "${C_GREEN}finished${C_CLEAR}"
     fi
     cd ../
+fi
+
+
+
+if [[ "$INSTALL_BRIDGE" == "y" ]]; then
+    echo -e "${C_H1} INSTALL BRIDGE FOR VCV RACK ${VERSION} ${C_CLEAR}"
+    if [ ! -d "Bridge" ]; then
+        echo -e "${C_GREEN}clone Bridge${C_CLEAR}"
+        echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
+        git clone https://github.com/VCVRack/Bridge.git &> $LOG
+        if [[ $? != 0 ]]; then
+            echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+            exit -1
+        else
+            echo -e "${C_GREEN}finished${C_CLEAR}"
+        fi
+    else
+        echo -e "${C_GREEN}already cloned Bridge${C_CLEAR}"
+    fi
+    cd ./Bridge
+    git fetch &> /dev/null
+    if [[ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]]; then
+        git pull &> /dev/null
+    else
+        echo -e "${C_GREEN}repository is up to date${C_CLEAR}"
+    fi
+    echo -e "${C_H2} build Bridge AudioUnit component ${C_CLEAR}"
+    echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
+    cd ./AU
+    if [ -d "build" ]; then
+        echo -e "${C_RED}clean old build${C_CLEAR}"
+        make clean &> /dev/null
+    fi
+    if [ ! -d "AudioUnitExamplesAudioUnitEffectGeneratorInstrumentMIDIProcessorandOffline" ]; then
+        echo -e "${C_GREEN}clone Bridge dependencies${C_CLEAR}"
+        echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
+        git clone https://github.com/derikon/AudioUnitExample.git &> $LOG
+        if [[ $? != 0 ]]; then
+            echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+            exit -1
+        else
+            echo -e "${C_GREEN}finished${C_CLEAR}"
+        fi
+        mv ./AudioUnitExample/AudioUnitExamplesAudioUnitEffectGeneratorInstrumentMIDIProcessorandOffline ./ &> $LOG
+        rm -rf ./AudioUnitExample &> $LOG
+    fi
+    make dist -j${CPUS} &> $LOG
+    if [[ $? != 0 ]]; then
+        echo -e "${C_RED}failed (see ${LOG})${C_CLEAR}"
+        exit -1
+    else
+        echo -e "${C_GREEN}finished${C_CLEAR}"
+    fi
+    cd ../VST
+    #[TODO] build VST plugin
+    #echo -e "${C_H2} build Bridge VST plugin ${C_CLEAR}"
+    #echo -e "${C_YELLOW}this might take a while ...${C_CLEAR}"
+    cd ../../
 fi
 
 
