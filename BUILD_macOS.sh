@@ -29,7 +29,7 @@ check_dependency () {
     which ${TOOL} &> /dev/null
     if [[ $? != 0 ]]; then
         echo -e "${C_RED}not installed${C_CLEAR}"
-        echo -e "${C_YELLOW}install git - this might take a while ...${C_CLEAR}"
+        echo -e "${C_YELLOW}install ${TOOL} - this might take a while ...${C_CLEAR}"
         $(brew install ${TOOL}) &> /dev/null
     else
         echo -e "${C_GREEN}ok${C_CLEAR}"
